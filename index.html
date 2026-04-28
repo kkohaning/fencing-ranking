@@ -718,12 +718,68 @@ button { cursor: pointer; border: none; background: none; }
 }
 
 /* === Responsive === */
+/* === Aside column === */
+.aside-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 @media (max-width: 900px) {
   .app { padding: 0 20px; }
   .main { grid-template-columns: 1fr; gap: 24px; }
   .form-grid { grid-template-columns: 1fr; }
   .hd-inner { flex-direction: column; align-items: stretch; gap: 16px; }
   .hd-title { font-size: 22px; }
+}
+
+@media (max-width: 640px) {
+  html { overflow-x: hidden; }
+  .app { padding: 0 14px; }
+  .hd { padding: 18px 0 16px; }
+  .hd-title { font-size: 19px; }
+  .hd-sub { font-size: 12px; }
+  .main { padding: 16px 0 60px; gap: 0; }
+
+  /* 부문 탭 넘침 방지 */
+  .div-nav { max-width: calc(100vw - 28px); }
+
+  /* 랭킹 테이블 넘침 방지 */
+  .tbl-wrap { max-width: calc(100vw - 28px); }
+
+  /* 사이드바를 랭킹 위로 */
+  .aside-col {
+    order: -1;
+    flex-direction: row;
+    gap: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 16px;
+    margin-bottom: 8px;
+  }
+  .aside-col::-webkit-scrollbar { display: none; }
+  .aside-section {
+    flex-shrink: 0;
+    width: 220px;
+    padding: 12px 14px;
+  }
+  .aside-section h2 { font-size: 12px; margin-bottom: 10px; }
+
+  /* 검색창 전체 너비 */
+  .section-head { flex-direction: column; align-items: stretch; }
+  .section-head-right { width: 100%; flex-direction: column; align-items: stretch; gap: 8px; }
+  .search-input { width: 100% !important; }
+  .search-input:focus { width: 100% !important; }
+
+  /* 모달 하단 시트 */
+  .modal { padding: 0; align-items: flex-end; }
+  .modal-content { border-radius: 16px 16px 0 0; max-height: 92vh; }
+  .modal-body { max-height: calc(92vh - 120px); padding: 16px; }
+  .modal-head { padding: 16px 16px 14px; }
+  .modal-foot { padding: 12px 16px; }
+
+  /* 탭 */
+  .div-tab { font-size: 13px; padding: 10px 14px; }
 }
 
 /* === Utilities === */
@@ -1054,7 +1110,7 @@ button { cursor: pointer; border: none; background: none; }
       <div id="ranking-content"></div>
     </section>
 
-    <aside style="display:flex;flex-direction:column;gap:16px;">
+    <aside class="aside-col">
       <div class="aside-section" id="current-winner-section">
         <h2>지난 대회 포디움</h2>
         <div id="current-winner-content"></div>
