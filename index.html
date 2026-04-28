@@ -747,6 +747,22 @@ button { cursor: pointer; border: none; background: none; }
   /* 랭킹 테이블 넘침 방지 */
   .tbl-wrap { max-width: calc(100vw - 28px); }
 
+  /* 모바일 테이블 컬럼 조정 */
+  .rt th:first-child, .rt td:first-child {
+    width: 110px;
+    min-width: 110px;
+    position: static;
+    border-right: none;
+  }
+  .rt th:last-child, .rt td:last-child {
+    position: static;
+    border-left: none;
+  }
+  .rt th, .rt td {
+    width: 100px;
+    min-width: 100px;
+  }
+
   /* 사이드바를 랭킹 위로 */
   .aside-col {
     order: -1;
@@ -1112,7 +1128,7 @@ button { cursor: pointer; border: none; background: none; }
 
     <aside class="aside-col">
       <div class="aside-section" id="current-winner-section">
-        <h2>지난 대회 포디움</h2>
+        <h2>최근 대회 포디움</h2>
         <div id="current-winner-content"></div>
       </div>
       <div class="aside-section" id="most-improved-section">
