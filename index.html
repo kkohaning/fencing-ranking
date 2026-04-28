@@ -1034,10 +1034,9 @@ button { cursor: pointer; border: none; background: none; }
     <div class="hd-inner">
       <div>
         <h1 class="hd-title">전국 동호인 펜싱 랭킹</h1>
-        <p class="hd-sub">비공식 집계 · 12개월 롤링 · 상위 4개 합산 · KFA 슬롯 강제 (T1·T2 1개 이상)</p>
+        <p class="hd-sub">비공식 집계 · 최근 12개월 · 상위 4개 대회 합산 · T1·T2 대회 1개 이상 출전 필수</p>
       </div>
       <button class="btn btn-primary" id="btn-import" style="display:none;">대회 결과 추가 / 편집</button>
-      <button class="btn btn-ghost" id="btn-admin-unlock" style="font-size:12px;color:var(--ink-4);padding:6px 10px;">관리자</button>
     </div>
   </header>
 
@@ -1082,7 +1081,8 @@ button { cursor: pointer; border: none; background: none; }
   </main>
 
   <footer class="foot">
-    데이터는 이 브라우저에 저장됩니다 · <button class="btn-ghost" id="btn-export" style="font-size:11.5px;padding:0;">데이터 내보내기</button> · <button class="btn-ghost" id="btn-import-data" style="font-size:11.5px;padding:0;">가져오기</button>
+    이 랭킹은 대한펜싱협회 및 공식 기관과 무관한 <strong>비공식 집계</strong>입니다 · 공식 선발·자격 기준으로 활용될 수 없습니다<br>
+    <span style="margin-top:6px;display:inline-block;">© 2025 kkohaning · All rights reserved · <button class="btn-ghost" id="btn-export" style="font-size:11.5px;padding:0;">데이터 내보내기</button> · <button class="btn-ghost" id="btn-import-data" style="font-size:11.5px;padding:0;">가져오기</button></span>
   </footer>
 
 </div>
@@ -1893,7 +1893,7 @@ function fmtPts(v) {
 function abbreviateName(name) {
   const n = name || '';
   if (/대한펜싱협회장배/.test(n)) return '대펜전국';
-  if (/서울특별시장기|서울특별시장배/.test(n)) return '서울시';
+  if (/서울특별시장기|서울특별시장배/.test(n)) return '서울시장기배';
   if (/경기도협회|경기(?:협회|도지사)/.test(n)) return '경기';
   if (/부산(?:광역시)?(?:협회|장기|장배)/.test(n)) return '부산';
   if (/대구(?:광역시)?(?:협회|장기|장배)/.test(n)) return '대구';
@@ -2841,29 +2841,6 @@ function renderAll() {
 async function init() {
   await loadState();
   renderAll();
-
-  // Admin unlock
-  const ADMIN_PW = '1234567';
-  let adminUnlocked = false;
-  document.getElementById('btn-admin-unlock').addEventListener('click', () => {
-    if (adminUnlocked) {
-      // 이미 열려있으면 잠금
-      adminUnlocked = false;
-      document.getElementById('btn-import').style.display = 'none';
-      document.getElementById('btn-admin-unlock').textContent = '관리자';
-      document.getElementById('btn-admin-unlock').style.color = 'var(--ink-4)';
-      return;
-    }
-    const pw = prompt('관리자 비밀번호를 입력하세요');
-    if (pw === ADMIN_PW) {
-      adminUnlocked = true;
-      document.getElementById('btn-import').style.display = '';
-      document.getElementById('btn-admin-unlock').textContent = '관리자 ✓';
-      document.getElementById('btn-admin-unlock').style.color = 'var(--used-mark)';
-    } else if (pw !== null) {
-      showToast('비밀번호가 올바르지 않습니다', 'error');
-    }
-  });
 
   document.getElementById('btn-import').addEventListener('click', () => openImportModal());
   document.getElementById('btn-close').addEventListener('click', closeImportModal);
