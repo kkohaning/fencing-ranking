@@ -2187,6 +2187,8 @@ function renderRanking() {
   ` : '';
 
   // Build cross-table
+  const isMobile = window.innerWidth <= 640;
+
   const tHeaders = tournaments.map(t => {
     return `
       <th title="${escapeHtml(t.name)}">
@@ -2233,8 +2235,7 @@ function renderRanking() {
           ${escapeHtml(f.name)}
           ${f.club ? `<div class="name-club">${escapeHtml(f.club)}</div>` : `<div class="name-club no-club">소속 미상</div>`}
         </td>
-        ${cells}
-        ${totalCells}
+        ${isMobile ? totalCells + cells : cells + totalCells}
       </tr>
     `;
   }).join('');
@@ -2246,9 +2247,7 @@ function renderRanking() {
         <thead>
           <tr>
             <th>선수</th>
-            ${tHeaders}
-            <th>총점</th>
-            <th>순위</th>
+            ${isMobile ? '<th>총점</th><th>순위</th>' + tHeaders : tHeaders + '<th>총점</th><th>순위</th>'}
           </tr>
         </thead>
         <tbody>${rows || ''}</tbody>
@@ -2996,6 +2995,13 @@ function renderAll() {
 async function init() {
   await loadState();
   renderAll();
+
+  // 화면 크기 변경 시 컬럼 순서 재렌더링
+  let _resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(_resizeTimer);
+    _resizeTimer = setTimeout(() => renderRanking(), 150);
+  });
 
   document.getElementById('btn-import').addEventListener('click', () => openImportModal());
   document.getElementById('btn-close').addEventListener('click', closeImportModal);
