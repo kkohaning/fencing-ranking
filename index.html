@@ -747,20 +747,54 @@ button { cursor: pointer; border: none; background: none; }
   /* 랭킹 테이블 넘침 방지 */
   .tbl-wrap { max-width: calc(100vw - 28px); }
 
-  /* 모바일 테이블 컬럼 조정 */
+  /* 모바일 테이블 컬럼 조정 — 선수·총점·순위 왼쪽 고정 */
+  .rt th, .rt td {
+    width: 72px;
+    min-width: 72px;
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+
+  /* 선수 열 */
   .rt th:first-child, .rt td:first-child {
-    width: 110px;
-    min-width: 110px;
-    position: static;
+    width: 90px;
+    min-width: 90px;
+    position: sticky;
+    left: 0;
+    z-index: 3;
     border-right: none;
   }
+
+  /* 총점 열 (모바일에서 2번째) */
+  .rt th:nth-child(2), .rt td:nth-child(2) {
+    position: sticky;
+    left: 90px;
+    z-index: 3;
+    background: var(--bg-card);
+    border-right: none;
+  }
+  .rt thead th:nth-child(2) { background: var(--bg-soft); }
+  .rt tbody tr.dnr-row td:nth-child(2) { background: var(--bg-alt); }
+  .rt tbody tr:hover td:nth-child(2) { background: var(--bg-soft); }
+  .rt tbody tr.dnr-row:hover td:nth-child(2) { background: #ECE5D2; }
+
+  /* 순위 열 (모바일에서 3번째) */
+  .rt th:nth-child(3), .rt td:nth-child(3) {
+    position: sticky;
+    left: 162px;
+    z-index: 3;
+    background: var(--bg-card);
+    border-right: 1px solid var(--line);
+  }
+  .rt thead th:nth-child(3) { background: var(--bg-soft); }
+  .rt tbody tr.dnr-row td:nth-child(3) { background: var(--bg-alt); }
+  .rt tbody tr:hover td:nth-child(3) { background: var(--bg-soft); }
+  .rt tbody tr.dnr-row:hover td:nth-child(3) { background: #ECE5D2; }
+
+  /* 마지막 열(PC에서 sticky right) 모바일에선 해제 */
   .rt th:last-child, .rt td:last-child {
     position: static;
     border-left: none;
-  }
-  .rt th, .rt td {
-    width: 100px;
-    min-width: 100px;
   }
 
   /* 사이드바를 랭킹 위로 */
@@ -1985,7 +2019,7 @@ function fmtPts(v) {
 function abbreviateName(name) {
   const n = name || '';
   if (/대한펜싱협회장배/.test(n)) return '대펜전국';
-  if (/서울특별시장기|서울특별시장배/.test(n)) return '서울시장기배';
+  if (/서울특별시장기|서울특별시장배/.test(n)) return '서울시장기';
   if (/경기도협회|경기(?:협회|도지사)/.test(n)) return '경기';
   if (/부산(?:광역시)?(?:협회|장기|장배)/.test(n)) return '부산';
   if (/대구(?:광역시)?(?:협회|장기|장배)/.test(n)) return '대구';
