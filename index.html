@@ -2035,7 +2035,7 @@ function abbreviateName(name) {
   if (/경북|경상북도/.test(n)) return '경북';
   if (/경남|경상남도/.test(n)) return '경남';
   if (/제주(?:특별자치도)?/.test(n)) return '제주';
-  if (/세종/.test(n)) return '세종';
+  if (/올림피언/.test(n)) return '올림피언';
   // Fallback: strip year/회 prefix and noise, take first ~5 chars
   const s = n
     .replace(/^\d{4}\s*/, '').replace(/^제\d+회\s*/, '')
