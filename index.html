@@ -1226,7 +1226,7 @@ const DIV_KEYS = Object.keys(DIVISIONS);
 const TIER_INFO = {
   T1: { name: '협회장배 전국선수권', mult: 1.0, maxRank: 128 },
   T2: { name: '지역협회장배', mult: 0.6, maxRank: 64 },
-  T3: { name: '사설대회', mult: 0.36, maxRank: 32 },
+  T3: { name: '사설대회', mult: 0.2, maxRank: 32 },
 };
 
 const TIER_PATTERNS = {
@@ -2671,7 +2671,7 @@ function renderReviewBody() {
         <select id="f-tier">
           <option value="T1" ${draft.tier==='T1'?'selected':''}>Tier 1 — 협회장배 전국선수권 (×1.00)</option>
           <option value="T2" ${draft.tier==='T2'?'selected':''}>Tier 2 — 지역협회장배 (×0.60)</option>
-          <option value="T3" ${draft.tier==='T3'?'selected':''}>Tier 3 — 사설대회 (×0.36)</option>
+          <option value="T3" ${draft.tier==='T3'?'selected':''}>Tier 3 — 사설대회 (×0.2)</option>
         </select>
       </div>
     </div>
