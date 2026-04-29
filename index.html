@@ -1557,7 +1557,7 @@ function calculateFencerScore(results) {
       points: Math.round(sum * 100) / 100,
       eligible: false,
       top4Ids: new Set(naturalTop4.map(r => r.tournamentId)),
-      reason: 'KFA 대회 (T1·T2) 미참가',
+      reason: '협회 주관 대회 (T1·T2) 미참가',
     };
   }
 
@@ -2216,7 +2216,7 @@ function renderRanking() {
   const allDnr = fencerScores.length > 0 && fencerScores.every(f => !f.eligible);
   const dnrBanner = allDnr ? `
     <div class="info-note" style="margin-bottom: 12px; border-left-color: var(--warn);">
-      <strong>모든 선수가 비랭킹 상태입니다.</strong> 등록된 대회에 KFA 공인(T1·T2) 결과가 없어 슬롯 규칙(T1·T2 1개 이상)을 충족하지 못합니다. T1 또는 T2 대회를 추가하면 랭킹이 활성화됩니다.
+      <strong>모든 선수가 랭킹 미집계 상태입니다.</strong> 등록된 대회에 협회 주관 대회(T1·T2) 결과가 없어 슬롯 규칙(T1·T2 1개 이상)을 충족하지 못합니다. T1 또는 T2 대회를 추가하면 랭킹이 활성화됩니다.
     </div>
   ` : '';
 
@@ -2259,7 +2259,7 @@ function renderRanking() {
         </td>
       `;
     } else {
-      totalCells = `<td colspan="2" class="dnr-text">${escapeHtml(f.reason || '비랭킹')}</td>`;
+      totalCells = `<td colspan="2" class="dnr-text">${escapeHtml(f.reason || '랭킹 미집계')}</td>`;
     }
 
     const is1st = f.eligible && f.finalRank === 1;
