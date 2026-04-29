@@ -306,14 +306,17 @@ html, body {
           <div class="tier-info-name">사설 대회</div>
           <div class="tier-info-desc">규모가 있는 민간 주관 오픈 대회 중 대회 경기 결과를 온라인에 게시하는 경우에만 집계합니다.</div>
         </div>
-        <div class="tier-mult">×0.2</div>
+        <div class="tier-mult">×0.23</div>
       </div>
     </div>
   </section>
 
   <section class="rule-section">
     <h2>순위별 기본 점수</h2>
-    <p>순위가 높을수록 점수가 높으며, 상위권일수록 점수 차이가 크게 벌어집니다. 중간 순위는 구간 사이 값으로 자동 계산됩니다.</p>
+    <p>순위가 높을수록 점수가 높으며, 상위권일수록 점수 차이가 크게 벌어집니다. 모든 순위는 수학 공식으로 연속적으로 계산되며, 같은 구간이라도 순위마다 다른 점수가 부여됩니다.</p>
+    <div class="note" style="margin-top:14px;font-family:monospace;font-size:13px;">
+      기본 점수(r) = 32 × (1 − log₂(r) / 8)<sup>2.1</sup> · 최솟값 0.1점
+    </div>
     <div class="pts-wrap" style="margin-top:14px;">
       <table class="pts-table">
         <thead>
@@ -323,21 +326,24 @@ html, body {
           </tr>
         </thead>
         <tbody>
-          <tr><td class="gold">1위</td><td>32점</td></tr>
-          <tr><td>2위</td><td>26점</td></tr>
-          <tr><td>3위</td><td>23점</td></tr>
-          <tr><td>4위</td><td>20점</td></tr>
-          <tr><td>8위</td><td>14점</td></tr>
-          <tr><td>16위</td><td>8점</td></tr>
-          <tr><td>32위</td><td>4점</td></tr>
-          <tr><td>64위</td><td>2점</td></tr>
-          <tr><td>128위</td><td>1점</td></tr>
+          <tr><td class="gold">1위</td><td>32.00점</td></tr>
+          <tr><td>2위</td><td>24.18점</td></tr>
+          <tr><td>3위</td><td>20.13점</td></tr>
+          <tr><td>4위</td><td>17.49점</td></tr>
+          <tr><td>8위</td><td>11.93점</td></tr>
+          <tr><td>16위</td><td>7.46점</td></tr>
+          <tr><td>32위</td><td>4.08점</td></tr>
+          <tr><td>64위</td><td>1.74점</td></tr>
+          <tr><td>96위</td><td>0.84점</td></tr>
+          <tr><td>128위</td><td>0.41점</td></tr>
+          <tr><td>그 이하</td><td>0.1점 (최솟값)</td></tr>
         </tbody>
       </table>
     </div>
     <div class="note" style="margin-top:14px;">
-      <strong>계산 예시</strong>: Tier 1 대회에서 3위를 한 경우 → 23점 × 1.0 = <strong>23점</strong><br>
-      Tier 2 대회에서 1위를 한 경우 → 32점 × 0.6 = <strong>19.2점</strong>
+      <strong>계산 예시</strong>: Tier 1 대회에서 3위를 한 경우 → 20.13점 × 1.0 = <strong>20.13점</strong><br>
+      Tier 2 대회에서 1위를 한 경우 → 32점 × 0.6 = <strong>19.2점</strong><br>
+      Tier 3 대회에서 1위를 한 경우 → 32점 × 0.23 = <strong>7.36점</strong>
     </div>
   </section>
 
