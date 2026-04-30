@@ -1213,7 +1213,8 @@ button { cursor: pointer; border: none; background: none; }
         <h2>방명록</h2>
         <div id="gb-list" style="min-height:45px;max-height:120px;overflow-y:auto;margin-bottom:10px;display:flex;flex-direction:column;"></div>
         <div style="display:flex;gap:5px;align-items:center;">
-          <input id="gb-name" type="text" placeholder="닉네임" maxlength="10" style="font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg-card);color:var(--ink);outline:none;font-family:inherit;width:68px;flex-shrink:0;">
+          <input id="gb-name" type="text" placeholder="닉네임" maxlength="10" style="font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg-card);color:var(--ink);outline:none;font-family:inherit;width:60px;flex-shrink:0;">
+          <input id="gb-pw" type="password" placeholder="비번" maxlength="20" style="font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg-card);color:var(--ink);outline:none;font-family:inherit;width:52px;flex-shrink:0;">
           <input id="gb-msg" type="text" placeholder="메모를 남겨주세요" maxlength="60" style="font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg-card);color:var(--ink);outline:none;font-family:inherit;flex:1;min-width:0;">
           <button id="gb-submit" style="font-size:12px;font-weight:600;padding:6px 10px;background:var(--ink);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;flex-shrink:0;">남기기</button>
         </div>
@@ -3201,6 +3202,13 @@ init();
 
   // ===== 방명록 =====
   const GB_URL = 'https://fencingrankvistor-default-rtdb.firebaseio.com/guestbook.json';
+  const GB_BASE = 'https://fencingrankvistor-default-rtdb.firebaseio.com/guestbook';
+
+  // 비밀번호를 평문으로 저장하지 않고 간단한 해시로 저장
+  async function simpleHash(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,16);
+  }
 
   async function loadGuestbook() {
     const el = document.getElementById('gb-list');
@@ -3209,34 +3217,53 @@ init();
       const res = await fetch(GB_URL);
       const data = await res.json();
       if (!data) { el.innerHTML = '<div class="gb-empty">아직 방명록이 없어요. 첫 메모를 남겨주세요!</div>'; return; }
-      const entries = Object.values(data).filter(e => e.msg);
-      entries.sort((a, b) => (a.ts || 0) - (b.ts || 0)); // 오래된순
+      const entries = Object.entries(data)
+        .filter(([k,v]) => v.msg)
+        .map(([key, v]) => ({...v, key}));
+      entries.sort((a, b) => (a.ts || 0) - (b.ts || 0));
       el.innerHTML = entries.slice(-50).map(e => `
-        <div class="gb-entry">
+        <div class="gb-entry" data-key="${e.key}" data-pw="${e.pw||''}">
           <div class="gb-meta">
             <span class="gb-name">${escapeHtml(e.name || '익명')}</span>
             <span class="gb-time">${fmtGbTime(e.ts)}</span>
+            <button class="gb-del-btn" data-key="${e.key}" data-pw="${e.pw||''}" title="삭제" style="font-size:10px;color:var(--ink-4);background:none;border:none;cursor:pointer;padding:0 2px;margin-left:4px;">✕</button>
           </div>
           <div class="gb-msg">${escapeHtml(e.msg)}</div>
         </div>
       `).join('');
-      el.scrollTop = el.scrollHeight; // 항상 최신 메모로 스크롤
+      el.scrollTop = el.scrollHeight;
+
+      // 삭제 버튼 이벤트
+      el.querySelectorAll('.gb-del-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const pw = prompt('삭제 비밀번호를 입력하세요:');
+          if (!pw) return;
+          const hash = await simpleHash(pw);
+          if (hash !== btn.dataset.pw) { alert('비밀번호가 틀렸어요.'); return; }
+          await fetch(`${GB_BASE}/${btn.dataset.key}.json`, { method: 'DELETE' });
+          loadGuestbook();
+        });
+      });
     } catch(e) { console.error('방명록 로드 실패', e); }
   }
 
   // 제출
   document.getElementById('gb-submit')?.addEventListener('click', async () => {
     const nameEl = document.getElementById('gb-name');
+    const pwEl = document.getElementById('gb-pw');
     const msgEl = document.getElementById('gb-msg');
     const name = (nameEl.value || '').trim() || '익명';
     const msg = (msgEl.value || '').trim();
+    const pwRaw = (pwEl.value || '').trim();
     if (!msg) { msgEl.focus(); return; }
+    const pw = pwRaw ? await simpleHash(pwRaw) : '';
     await fetch(GB_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, msg, ts: Date.now() })
+      body: JSON.stringify({ name, msg, pw, ts: Date.now() })
     });
     msgEl.value = '';
+    pwEl.value = '';
     loadGuestbook();
   });
 
