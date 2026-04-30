@@ -3202,14 +3202,14 @@ init();
   // ===== 방명록 =====
   const gbRef = ref(db, 'guestbook');
 
-  onValue(gbRef, snap => {
+  function renderGuestbook(snap) {
     const el = document.getElementById('gb-list');
-    if (!el) return;
+    if (!el) { setTimeout(() => renderGuestbook(snap), 100); return; }
     if (!snap.exists()) { el.innerHTML = '<div class="gb-empty">아직 방명록이 없어요</div>'; return; }
     const entries = [];
     snap.forEach(child => entries.push(child.val()));
     entries.sort((a, b) => (b.ts || 0) - (a.ts || 0));
-    el.innerHTML = entries.map(e => `
+    el.innerHTML = entries.slice(0, 50).map(e => `
       <div class="gb-entry">
         <div class="gb-meta">
           <span class="gb-name">${escapeHtml(e.name || '익명')}</span>
@@ -3218,7 +3218,9 @@ init();
         <div class="gb-msg">${escapeHtml(e.msg)}</div>
       </div>
     `).join('');
-  });
+  }
+
+  onValue(gbRef, renderGuestbook);
 
   document.getElementById('gb-submit')?.addEventListener('click', () => {
     const nameEl = document.getElementById('gb-name');
