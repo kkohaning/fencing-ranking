@@ -854,11 +854,32 @@ button { cursor: pointer; border: none; background: none; }
   color: var(--ink-4);
   padding: 4px 0;
 }
+#most-improved-content {
+  position: relative;
+  overflow: hidden;
+  height: 110px;
+}
 .improved-card {
   background: var(--bg-card);
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 12px 14px;
+}
+.improved-slide-in {
+  animation: slideInUp 0.35s ease forwards;
+}
+.improved-slide-out {
+  animation: slideOutUp 0.3s ease forwards;
+  position: absolute;
+  width: 100%;
+}
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideOutUp {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-18px); }
 }
 .improved-header {
   display: flex;
@@ -1179,7 +1200,7 @@ button { cursor: pointer; border: none; background: none; }
       </div>
       <div class="aside-section">
         <a href="./rules.html" style="display:flex;align-items:center;justify-content:space-between;text-decoration:none;color:var(--ink);">
-          <span style="font-size:14px;font-weight:600;">랭킹 규칙</span>
+          <span style="font-size:14px;font-weight:600;">랭킹 규칙 <span style="font-size:11px;font-weight:400;color:var(--ink-4);">ver. 2.01</span></span>
           <span style="font-size:13px;color:var(--ink-3);">→</span>
         </a>
         <p style="font-size:12px;color:var(--ink-3);margin-top:6px;line-height:1.5;">점수 계산 방식, 대회 등급, 랭킹 진입 조건 등 상세 설명</p>
@@ -1224,9 +1245,9 @@ const DIVISIONS = {
 const DIV_KEYS = Object.keys(DIVISIONS);
 
 const TIER_INFO = {
-  T1: { name: '협회장배 전국선수권', mult: 1.0, maxRank: 128 },
-  T2: { name: '지역협회장배', mult: 0.6, maxRank: 64 },
-  T3: { name: '사설대회', mult: 0.23, maxRank: 32 },
+  T1: { name: '협회장배 전국선수권', maxPts: 100, maxRank: 128 },
+  T2: { name: '지역협회장배', maxPts: 67, maxRank: 64 },
+  T3: { name: '사설대회', maxPts: 23, maxRank: 32 },
 };
 
 const TIER_PATTERNS = {
@@ -1467,18 +1488,13 @@ function getDelta(divKey, fencerKey, currentRank) {
 }
 
 // ===== Score logic =====
-function getRankScore(rank) {
+function calcPoints(rank, tier) {
   const r = Math.round(rank);
   if (r < 1) return 0;
-  return Math.max(32 * Math.pow(1 - Math.log2(r) / 8.0, 2.1), 0.1);
-}
-
-function tierMultiplier(tier) {
-  return TIER_INFO[tier]?.mult ?? 0;
-}
-
-function calcPoints(rank, tier) {
-  return Math.round(getRankScore(rank) * tierMultiplier(tier) * 100) / 100;
+  const maxPts = TIER_INFO[tier]?.maxPts ?? 0;
+  const val = 1 - Math.log2(r) / 8.0;
+  if (val <= 0) return Math.round(maxPts * 0.0001 * 100) / 100;
+  return Math.round(Math.max(maxPts * Math.pow(val, 1.6), maxPts * 0.0001) * 100) / 100;
 }
 
 // ===== Rolling window =====
@@ -2944,37 +2960,79 @@ function renderCurrentWinner() {
   `;
 }
 
+let _improvedTimer = null;
+let _improvedIndex = 0;
+
 function renderMostImproved() {
   const el = document.getElementById('most-improved-content');
   if (!el) return;
   const divKey = state.activeDivision;
   const { fencerScores } = computeRanking(divKey);
 
-  let best = null, bestDelta = 0, bestRank = null;
+  // 10위 이상 상승한 선수 전체 수집, 상승폭 내림차순
+  const climbers = [];
   fencerScores.filter(f => f.eligible).forEach(f => {
     const delta = getDelta(divKey, f.key, f.finalRank);
-    if (delta && delta.type === 'up' && delta.delta > bestDelta) {
-      bestDelta = delta.delta;
-      best = f;
-      bestRank = f.finalRank;
+    if (delta && delta.type === 'up' && delta.delta >= 10) {
+      climbers.push({ fencer: f, delta: delta.delta });
     }
   });
+  climbers.sort((a, b) => b.delta - a.delta);
 
-  if (!best) {
-    el.innerHTML = `<div class="aside-empty">${DIVISIONS[divKey].name} 부문 변동 없음</div>`;
-    return;
+  if (climbers.length === 0) {
+    // 10위 이상 없으면 가장 많이 상승한 1명
+    let best = null, bestDelta = 0;
+    fencerScores.filter(f => f.eligible).forEach(f => {
+      const delta = getDelta(divKey, f.key, f.finalRank);
+      if (delta && delta.type === 'up' && delta.delta > bestDelta) {
+        bestDelta = delta.delta;
+        best = f;
+      }
+    });
+    if (!best) {
+      el.innerHTML = `<div class="aside-empty">${DIVISIONS[divKey].name} 부문 변동 없음</div>`;
+      return;
+    }
+    climbers.push({ fencer: best, delta: bestDelta });
   }
 
-  el.innerHTML = `
-    <div class="improved-card">
+  // 타이머 초기화
+  if (_improvedTimer) clearInterval(_improvedTimer);
+  _improvedIndex = 0;
+
+  function showCard(idx) {
+    const { fencer: f, delta } = climbers[idx % climbers.length];
+    const card = document.createElement('div');
+    card.className = 'improved-card improved-slide-in';
+    card.innerHTML = `
       <div class="improved-header">
-        <span class="delta up"><span class="delta-arrow">▲</span>${bestDelta}</span>
+        <span class="delta up"><span class="delta-arrow">▲</span>${delta}</span>
       </div>
-      <div class="improved-name">${escapeHtml(best.name)}</div>
-      ${best.club ? `<div class="improved-club">${escapeHtml(best.club)}</div>` : ''}
-      <div class="improved-rank">${bestRank}위 · ${fmtPts(best.points)}점</div>
-    </div>
-  `;
+      <div class="improved-name">${escapeHtml(f.name)}</div>
+      ${f.club ? `<div class="improved-club" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(f.club)}</div>` : ''}
+      <div class="improved-rank">${f.finalRank}위 · ${fmtPts(f.points)}점</div>
+    `;
+
+    const old = el.querySelector('.improved-card');
+    if (old) {
+      old.classList.add('improved-slide-out');
+      setTimeout(() => {
+        if (el.contains(old)) el.removeChild(old);
+        el.appendChild(card);
+      }, 300);
+    } else {
+      el.appendChild(card);
+    }
+  }
+
+  showCard(0);
+
+  if (climbers.length > 1) {
+    _improvedTimer = setInterval(() => {
+      _improvedIndex++;
+      showCard(_improvedIndex);
+    }, 3000);
+  }
 }
 
 function renderUpcoming() {
