@@ -913,6 +913,17 @@ button { cursor: pointer; border: none; background: none; }
   border-bottom: 1px solid var(--line);
 }
 .upcoming-item:last-child { border-bottom: none; }
+.gb-entry {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.gb-entry:last-child { border-bottom: none; }
+.gb-meta { display: flex; justify-content: space-between; margin-bottom: 3px; }
+.gb-name { font-weight: 600; color: var(--ink); }
+.gb-time { color: var(--ink-4); font-size: 11px; }
+.gb-msg { color: var(--ink-2); line-height: 1.5; word-break: break-all; }
+.gb-empty { font-size: 12px; color: var(--ink-4); text-align: center; padding: 16px 0; }
 .upcoming-top {
   display: flex;
   align-items: center;
@@ -1161,7 +1172,7 @@ button { cursor: pointer; border: none; background: none; }
     <div class="hd-inner">
       <div>
         <h1 class="hd-title">전국 동호인 펜싱 랭킹</h1>
-        <p class="hd-sub">비공식 집계 · 최근 12개월 · 상위 4개 대회 합산 · T1·T2 대회 1개 이상 출전 필수 · 문의 <a href="mailto:kohaning@gmail.com" style="color:inherit;">kohaning@gmail.com</a> · <a href="https://open.kakao.com/o/svRgACsi" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;background:#1A1815;color:#FFFFFF;font-weight:600;font-size:11px;padding:2px 8px;border-radius:4px;text-decoration:none;vertical-align:middle;letter-spacing:0.01em;">💬 카카오톡 오픈채팅</a></p>
+        <p class="hd-sub">비공식 집계 · 최근 12개월 · 상위 4개 대회 합산 · T1·T2 대회 1개 이상 출전 필수 · 문의 <a href="mailto:kohaning@gmail.com" style="color:inherit;">kohaning@gmail.com</a> · <a href="https://open.kakao.com/o/svRgACsi" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;background:#1A1815;color:#FFFFFF;font-weight:600;font-size:11px;padding:2px 8px;border-radius:4px;text-decoration:none;vertical-align:middle;letter-spacing:0.01em;">💬 카카오톡 오픈채팅</a> · <span id="online-count" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--ink-3);vertical-align:middle;"><span class="online-dot" style="width:7px;height:7px;border-radius:50%;background:#38a169;display:inline-block;flex-shrink:0;"></span>접속중 <span class="online-num">-</span>명</span></p>
       </div>
       <button class="btn btn-primary" id="btn-import" style="display:none;">대회 결과 추가 / 편집</button>
       <script>if(location.protocol==='file:') document.getElementById('btn-import').style.display='';</script>
@@ -1197,6 +1208,15 @@ button { cursor: pointer; border: none; background: none; }
       <div class="aside-section" id="upcoming-section">
         <h2>다음 예정 대회</h2>
         <div id="upcoming-content"></div>
+      </div>
+      <div class="aside-section">
+        <h2>방명록</h2>
+        <div id="gb-list" style="min-height:120px;max-height:320px;overflow-y:auto;margin-bottom:10px;"></div>
+        <div style="display:flex;gap:5px;align-items:center;">
+          <input id="gb-name" type="text" placeholder="닉네임" maxlength="10" style="font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg-card);color:var(--ink);outline:none;font-family:inherit;width:68px;flex-shrink:0;">
+          <input id="gb-msg" type="text" placeholder="메모를 남겨주세요" maxlength="60" style="font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg-card);color:var(--ink);outline:none;font-family:inherit;flex:1;min-width:0;">
+          <button id="gb-submit" style="font-size:12px;font-weight:600;padding:6px 10px;background:var(--ink);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;flex-shrink:0;">남기기</button>
+        </div>
       </div>
       <div class="aside-section">
         <a href="./rules.html" style="display:flex;align-items:center;justify-content:space-between;text-decoration:none;color:var(--ink);">
@@ -3137,6 +3157,83 @@ async function init() {
 }
 
 init();
+</script>
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getDatabase, ref, onValue, push, set, onDisconnect, serverTimestamp, query, orderByChild, limitToLast } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB4fHn9ymqieQ4DaLP64MrtjiA05U1gH8A",
+    authDomain: "fencingrankvistor.firebaseapp.com",
+    databaseURL: "https://fencingrankvistor-default-rtdb.firebaseio.com",
+    projectId: "fencingrankvistor",
+    storageBucket: "fencingrankvistor.firebasestorage.app",
+    messagingSenderId: "614053721560",
+    appId: "1:614053721560:web:6cd14b4a4d4dc2e1a4eead"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // ===== 접속자 카운터 =====
+  const sessionRef = ref(db, 'sessions/' + Date.now() + '_' + Math.random().toString(36).slice(2));
+  set(sessionRef, true);
+  onDisconnect(sessionRef).remove();
+
+  const sessionsRef = ref(db, 'sessions');
+  onValue(sessionsRef, snap => {
+    const count = snap.exists() ? Object.keys(snap.val()).length : 0;
+    const el = document.getElementById('online-count');
+    if (!el) return;
+    const dot = el.querySelector('.online-dot');
+    el.querySelector('.online-num').textContent = count;
+    if (count >= 100) dot.style.background = '#e53e3e';
+    else if (count >= 50) dot.style.background = '#d69e2e';
+    else dot.style.background = '#38a169';
+  });
+
+  // ===== 방명록 =====
+  const gbRef = query(ref(db, 'guestbook'), orderByChild('ts'), limitToLast(50));
+
+  onValue(gbRef, snap => {
+    const el = document.getElementById('gb-list');
+    if (!el) return;
+    if (!snap.exists()) { el.innerHTML = '<div class="gb-empty">아직 방명록이 없어요</div>'; return; }
+    const entries = [];
+    snap.forEach(child => entries.unshift(child.val()));
+    el.innerHTML = entries.map(e => `
+      <div class="gb-entry">
+        <div class="gb-meta">
+          <span class="gb-name">${escapeHtml(e.name || '익명')}</span>
+          <span class="gb-time">${fmtGbTime(e.ts)}</span>
+        </div>
+        <div class="gb-msg">${escapeHtml(e.msg)}</div>
+      </div>
+    `).join('');
+  });
+
+  document.getElementById('gb-submit')?.addEventListener('click', () => {
+    const nameEl = document.getElementById('gb-name');
+    const msgEl = document.getElementById('gb-msg');
+    const name = (nameEl.value || '').trim() || '익명';
+    const msg = (msgEl.value || '').trim();
+    if (!msg) { msgEl.focus(); return; }
+    push(ref(db, 'guestbook'), { name, msg, ts: Date.now() });
+    msgEl.value = '';
+  });
+
+  document.getElementById('gb-msg')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('gb-submit')?.click();
+  });
+
+  function fmtGbTime(ts) {
+    if (!ts) return '';
+    const d = new Date(ts);
+    const mo = d.getMonth()+1, dd = d.getDate(), h = d.getHours(), m = String(d.getMinutes()).padStart(2,'0');
+    return `${mo}/${dd} ${h}:${m}`;
+  }
 </script>
 </body>
 </html>
