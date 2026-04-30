@@ -3162,7 +3162,7 @@ init();
 <!-- Firebase -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getDatabase, ref, onValue, push, set, onDisconnect, serverTimestamp, query, orderByChild, limitToLast } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+  import { getDatabase, ref, onValue, push, set, onDisconnect, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyB4fHn9ymqieQ4DaLP64MrtjiA05U1gH8A",
@@ -3200,14 +3200,15 @@ init();
   });
 
   // ===== 방명록 =====
-  const gbRef = query(ref(db, 'guestbook'), orderByChild('ts'), limitToLast(50));
+  const gbRef = ref(db, 'guestbook');
 
   onValue(gbRef, snap => {
     const el = document.getElementById('gb-list');
     if (!el) return;
     if (!snap.exists()) { el.innerHTML = '<div class="gb-empty">아직 방명록이 없어요</div>'; return; }
     const entries = [];
-    snap.forEach(child => entries.unshift(child.val()));
+    snap.forEach(child => entries.push(child.val()));
+    entries.sort((a, b) => (b.ts || 0) - (a.ts || 0));
     el.innerHTML = entries.map(e => `
       <div class="gb-entry">
         <div class="gb-meta">
