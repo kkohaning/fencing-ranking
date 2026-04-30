@@ -3177,6 +3177,11 @@ init();
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
+  // escapeHtml (모듈 내부용)
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
   // ===== 접속자 카운터 =====
   const sessionRef = ref(db, 'sessions/' + Date.now() + '_' + Math.random().toString(36).slice(2));
   set(sessionRef, true);
