@@ -3162,7 +3162,7 @@ init();
 <!-- Firebase -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getDatabase, ref, onValue, push, set, onDisconnect, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+  import { getDatabase, ref, onValue, set, onDisconnect } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyB4fHn9ymqieQ4DaLP64MrtjiA05U1gH8A",
@@ -3200,41 +3200,51 @@ init();
   });
 
   // ===== 방명록 =====
-  const gbRef = ref(db, 'guestbook');
+  const GB_URL = 'https://fencingrankvistor-default-rtdb.firebaseio.com/guestbook.json';
 
-  function renderGuestbook(snap) {
+  async function loadGuestbook() {
     const el = document.getElementById('gb-list');
-    if (!el) { setTimeout(() => renderGuestbook(snap), 100); return; }
-    if (!snap.exists()) { el.innerHTML = '<div class="gb-empty">아직 방명록이 없어요</div>'; return; }
-    const entries = [];
-    snap.forEach(child => entries.push(child.val()));
-    entries.sort((a, b) => (b.ts || 0) - (a.ts || 0));
-    el.innerHTML = entries.slice(0, 50).map(e => `
-      <div class="gb-entry">
-        <div class="gb-meta">
-          <span class="gb-name">${escapeHtml(e.name || '익명')}</span>
-          <span class="gb-time">${fmtGbTime(e.ts)}</span>
+    if (!el) return;
+    try {
+      const res = await fetch(GB_URL);
+      const data = await res.json();
+      if (!data) { el.innerHTML = '<div class="gb-empty">아직 방명록이 없어요</div>'; return; }
+      const entries = Object.values(data).filter(e => e.msg);
+      entries.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+      el.innerHTML = entries.slice(0, 50).map(e => `
+        <div class="gb-entry">
+          <div class="gb-meta">
+            <span class="gb-name">${escapeHtml(e.name || '익명')}</span>
+            <span class="gb-time">${fmtGbTime(e.ts)}</span>
+          </div>
+          <div class="gb-msg">${escapeHtml(e.msg)}</div>
         </div>
-        <div class="gb-msg">${escapeHtml(e.msg)}</div>
-      </div>
-    `).join('');
+      `).join('');
+    } catch(e) { console.error('방명록 로드 실패', e); }
   }
 
-  onValue(gbRef, renderGuestbook);
-
-  document.getElementById('gb-submit')?.addEventListener('click', () => {
+  // 제출
+  document.getElementById('gb-submit')?.addEventListener('click', async () => {
     const nameEl = document.getElementById('gb-name');
     const msgEl = document.getElementById('gb-msg');
     const name = (nameEl.value || '').trim() || '익명';
     const msg = (msgEl.value || '').trim();
     if (!msg) { msgEl.focus(); return; }
-    push(ref(db, 'guestbook'), { name, msg, ts: Date.now() });
+    await fetch(GB_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, msg, ts: Date.now() })
+    });
     msgEl.value = '';
+    loadGuestbook();
   });
 
   document.getElementById('gb-msg')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') document.getElementById('gb-submit')?.click();
   });
+
+  loadGuestbook();
+  setInterval(loadGuestbook, 30000); // 30초마다 자동 갱신
 
   function fmtGbTime(ts) {
     if (!ts) return '';
