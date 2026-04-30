@@ -258,6 +258,12 @@ html, body {
     <div style="margin-top:16px;background:var(--accent-soft);border-left:3px solid var(--accent);padding:12px 16px;border-radius:0 6px 6px 0;font-size:13px;color:var(--t1-color);line-height:1.6;">
       이 랭킹은 <strong>동호인들의 자발적인 참여로 운영되는 비공식 집계</strong>입니다. 대한펜싱협회 및 어떠한 공식 기관과도 무관하며, 공식 선발이나 자격 기준으로 활용될 수 없습니다. 테스트 운영 기간 중 랭킹 규칙의 세부 사항은 조정될 수 있습니다.
     </div>
+    <div style="margin-top:10px;background:var(--bg-soft);border-left:3px solid var(--ink-4);padding:12px 16px;border-radius:0 6px 6px 0;font-size:12.5px;color:var(--ink-2);line-height:1.7;">
+      <strong style="color:var(--ink);font-size:12.5px;">[공지] 2026-04-30 랭킹 산출 방식 업데이트 (v2.01)</strong><br>
+      순위별 점수 배분 공식이 개편되었습니다.<br>
+      기존 공식에서 상위권에 지나치게 집중되던 점수 구조를 완화하여 <strong>중위권 선수 간 변별력</strong>을 높였습니다. 또한 단일 대회 고득점보다 <strong>다수 대회 꾸준한 출전</strong>이 유리하게 작용하도록 점수 감소 곡선을 조정하였습니다.<br>
+      대회 등급별 우승 점수도 함께 조정되었습니다 (T1: 32점 → 100점 / T2: 19.2점 → 67점 / T3: 7.36점 → 23점). <strong>T2 대회는 T1 대회의 약 2/3 수준, T3 대회는 T2 대회의 약 1/3 수준</strong>으로 등급 간 격차를 설계하였습니다. 점수 단위가 크게 변경되었으나 이는 스케일 조정이며, 기존 대비 랭킹 순위 변동은 최대 ±7위 수준입니다.
+    </div>
   </header>
 
   <section class="rule-section">
@@ -277,7 +283,7 @@ html, body {
   <section class="rule-section">
     <h2>점수 계산 방식</h2>
     <p>12개월 내 출전한 대회 중 <strong>점수가 높은 상위 4개</strong> 결과만 합산합니다. 5개 이상 출전해도 가장 유리한 4개만 적용됩니다.</p>
-    <p>각 대회의 점수는 <strong>순위별 기본 점수 × 대회 등급 배율</strong>로 계산됩니다.</p>
+    <p>각 대회의 점수는 <strong>대회 등급별 최대점수와 순위</strong>로 계산됩니다. 등급마다 우승 점수가 다르며, 순위가 낮아질수록 점수가 줄어듭니다.</p>
   </section>
 
   <section class="rule-section">
@@ -290,7 +296,7 @@ html, body {
           <div class="tier-info-name">대한펜싱협회장배 전국 동호인 선수권</div>
           <div class="tier-info-desc">대한펜싱협회가 주관하는 전국 단위 공식 대회</div>
         </div>
-        <div class="tier-mult">×1.0</div>
+        <div class="tier-mult">우승 100점</div>
       </div>
       <div class="tier-card">
         <span class="tier-badge t2">TIER 2</span>
@@ -298,7 +304,7 @@ html, body {
           <div class="tier-info-name">시·도 협회장배</div>
           <div class="tier-info-desc">서울특별시장기, 경기도협회장배 등 광역시·도 단위 공식 대회</div>
         </div>
-        <div class="tier-mult">×0.6</div>
+        <div class="tier-mult">우승 67점</div>
       </div>
       <div class="tier-card">
         <span class="tier-badge t3">TIER 3</span>
@@ -306,44 +312,44 @@ html, body {
           <div class="tier-info-name">사설 대회</div>
           <div class="tier-info-desc">규모가 있는 민간 주관 오픈 대회 중 대회 경기 결과를 온라인에 게시하는 경우에만 집계합니다.</div>
         </div>
-        <div class="tier-mult">×0.23</div>
+        <div class="tier-mult">우승 23점</div>
       </div>
     </div>
   </section>
 
   <section class="rule-section">
-    <h2>순위별 기본 점수</h2>
-    <p>순위가 높을수록 점수가 높으며, 상위권일수록 점수 차이가 크게 벌어집니다. 모든 순위는 수학 공식으로 연속적으로 계산되며, 같은 구간이라도 순위마다 다른 점수가 부여됩니다.</p>
+    <h2>순위별 점수</h2>
+    <p>모든 순위는 수학 공식으로 연속적으로 계산되며, 같은 구간이라도 순위마다 다른 점수가 부여됩니다. 상위권일수록 점수 차이가 크고, 중위권도 의미 있는 차등이 있습니다.</p>
     <div class="note" style="margin-top:14px;font-family:monospace;font-size:13px;">
-      기본 점수(r) = 32 × (1 − log₂(r) / 8)<sup>2.1</sup> · 최솟값 0.1점
+      f(r) = MAX × (1 − log₂(r) / 8)<sup>1.6</sup>
     </div>
     <div class="pts-wrap" style="margin-top:14px;">
       <table class="pts-table">
         <thead>
           <tr>
             <th>순위</th>
-            <th style="text-align:right;">기본 점수</th>
+            <th style="text-align:right;color:#8B1A1A;">T1 점수</th>
+            <th style="text-align:right;color:#2D5F8C;">T2 점수</th>
+            <th style="text-align:right;color:#6B6260;">T3 점수</th>
           </tr>
         </thead>
         <tbody>
-          <tr><td class="gold">1위</td><td>32.00점</td></tr>
-          <tr><td>2위</td><td>24.18점</td></tr>
-          <tr><td>3위</td><td>20.13점</td></tr>
-          <tr><td>4위</td><td>17.49점</td></tr>
-          <tr><td>8위</td><td>11.93점</td></tr>
-          <tr><td>16위</td><td>7.46점</td></tr>
-          <tr><td>32위</td><td>4.08점</td></tr>
-          <tr><td>64위</td><td>1.74점</td></tr>
-          <tr><td>96위</td><td>0.84점</td></tr>
-          <tr><td>128위</td><td>0.41점</td></tr>
-          <tr><td>그 이하</td><td>0.1점 (최솟값)</td></tr>
+          <tr><td class="gold">1위 (우승)</td><td style="text-align:right;color:#8B1A1A;">100.00</td><td style="text-align:right;color:#2D5F8C;">67.00</td><td style="text-align:right;color:#6B6260;">23.00</td></tr>
+          <tr><td>2위</td><td style="text-align:right;">80.76</td><td style="text-align:right;">54.11</td><td style="text-align:right;">18.58</td></tr>
+          <tr><td>3위</td><td style="text-align:right;">70.24</td><td style="text-align:right;">47.06</td><td style="text-align:right;">16.15</td></tr>
+          <tr><td>4위</td><td style="text-align:right;">63.11</td><td style="text-align:right;">42.28</td><td style="text-align:right;">14.52</td></tr>
+          <tr><td>8위</td><td style="text-align:right;">47.14</td><td style="text-align:right;">31.59</td><td style="text-align:right;">10.84</td></tr>
+          <tr><td>16위</td><td style="text-align:right;">32.99</td><td style="text-align:right;">22.10</td><td style="text-align:right;">7.59</td></tr>
+          <tr><td>32위</td><td style="text-align:right;">20.82</td><td style="text-align:right;">13.95</td><td style="text-align:right;">4.79</td></tr>
+          <tr><td>64위</td><td style="text-align:right;">10.88</td><td style="text-align:right;">7.29</td><td style="text-align:right;">2.50</td></tr>
+          <tr><td>128위</td><td style="text-align:right;">3.59</td><td style="text-align:right;">2.41</td><td style="text-align:right;">0.83</td></tr>
         </tbody>
       </table>
     </div>
     <div class="note" style="margin-top:14px;">
-      <strong>계산 예시</strong>: Tier 1 대회에서 3위를 한 경우 → 20.13점 × 1.0 = <strong>20.13점</strong><br>
-      Tier 2 대회에서 1위를 한 경우 → 32점 × 0.6 = <strong>19.2점</strong><br>
-      Tier 3 대회에서 1위를 한 경우 → 32점 × 0.23 = <strong>7.36점</strong>
+      <strong>계산 예시</strong>: T1 대회에서 3위를 한 경우 → <strong>70.24점</strong><br>
+      T2 대회에서 1위를 한 경우 → <strong>67.00점</strong><br>
+      T3 대회에서 1위를 한 경우 → <strong>23.00점</strong>
     </div>
   </section>
 
@@ -396,7 +402,7 @@ html, body {
 
   <footer class="foot">
     전국 동호인 펜싱 랭킹 · 규칙은 운영진 판단에 따라 변경될 수 있습니다<br>
-    <span style="font-size:11px;color:var(--ink-4);margin-top:4px;display:inline-block;">규칙 최종 업데이트 2026-04-29</span>
+    <span style="font-size:11px;color:var(--ink-4);margin-top:4px;display:inline-block;">규칙 최종 업데이트 2026-04-30</span>
   </footer>
 
 </div>
