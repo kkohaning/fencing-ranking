@@ -3100,6 +3100,9 @@ function renderUpcoming() {
   el.innerHTML = upcoming.map(t => {
     const daysLeft = Math.ceil((new Date(t.date) - new Date()) / (1000 * 60 * 60 * 24));
     const totalResults = DIV_KEYS.reduce((s, k) => s + ((t.results[k] || []).length), 0);
+    const startDate = t.date.replace(/-/g, '.');
+    const endDate = t.endDate ? t.endDate.replace(/-/g, '.') : '';
+    const schedule = endDate ? `${startDate} ~ ${endDate.slice(5)}` : startDate;
     return `
       <div class="upcoming-item">
         <div class="upcoming-top">
@@ -3107,7 +3110,7 @@ function renderUpcoming() {
           <span class="upcoming-days">D-${daysLeft}</span>
         </div>
         <div class="upcoming-name">${escapeHtml(t.name)}</div>
-        <div class="upcoming-meta">${t.date}${totalResults ? ` · ${totalResults}명 입력됨` : ''}</div>
+        <div class="upcoming-meta">${schedule}${totalResults ? ` · ${totalResults}명 입력됨` : ''}</div>
       </div>
     `;
   }).join('');
