@@ -1,0 +1,18 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "sessions": {
+      ".read": true,
+      "$session": {
+        ".write": "(!data.exists() && newData.val() === true) || (data.exists() && !newData.exists())",
+        ".validate": "newData.val() === true"
+      }
+    },
+    "guestbook": {
+      ".read": true,
+      ".write": false,
+      ".indexOn": ["ts"]
+    }
+  }
+}
