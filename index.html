@@ -1237,7 +1237,7 @@ button { cursor: pointer; border: none; background: none; }
       </div>
       <div class="aside-section">
         <a href="./rules.html" style="display:flex;align-items:center;justify-content:space-between;text-decoration:none;color:var(--ink);">
-          <span style="font-size:14px;font-weight:600;">랭킹 규칙 <span style="font-size:11px;font-weight:400;color:var(--ink-4);">ver. 2.01</span></span>
+          <span style="font-size:14px;font-weight:600;">랭킹 규칙 <span style="font-size:11px;font-weight:400;color:var(--ink-4);">ver. 2.02</span></span>
           <span style="font-size:13px;color:var(--ink-3);">→</span>
         </a>
         <p style="font-size:12px;color:var(--ink-3);margin-top:6px;line-height:1.5;">점수 계산 방식, 대회 등급, 랭킹 진입 조건 등 상세 설명</p>
@@ -1282,9 +1282,9 @@ const DIVISIONS = {
 const DIV_KEYS = Object.keys(DIVISIONS);
 
 const TIER_INFO = {
-  T1: { name: '협회장배 전국선수권', maxPts: 100, maxRank: 128 },
-  T2: { name: '지역협회장배', maxPts: 67, maxRank: 64 },
-  T3: { name: '사설대회', maxPts: 23, maxRank: 32 },
+  T1: { name: '지정 최상위 대회', maxPts: 100, maxRank: 128 },
+  T2: { name: '협회 주관 공식대회', maxPts: 67, maxRank: 64 },
+  T3: { name: '민간 오픈대회', maxPts: 23, maxRank: 32 },
 };
 
 const TIER_PATTERNS = {
@@ -1292,6 +1292,7 @@ const TIER_PATTERNS = {
     /대한펜싱협회장배/,
   ],
   T2: [
+    /펜싱\s*클럽\s*코리아/,
     /(?:서울|부산|대구|인천|광주|대전|울산|세종)\s*특별시장(?:기|배)?/,
     /(?:서울|부산|대구|인천|광주|대전|울산|세종)\s*광역시장(?:기|배)?/,
     /(?:^|\s)특별시장(?:기|배)/,
