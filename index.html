@@ -85,6 +85,18 @@ button { cursor: pointer; border: none; background: none; }
   color: var(--ink-3);
   letter-spacing: 0;
 }
+.hd-updated {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 9px;
+  padding: 4px 9px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  background: var(--bg-soft);
+  color: var(--ink-2);
+  font-size: 11.5px;
+  font-weight: 600;
+}
 
 /* === Buttons === */
 .btn {
@@ -1173,6 +1185,7 @@ button { cursor: pointer; border: none; background: none; }
       <div>
         <h1 class="hd-title">전국 동호인 펜싱 랭킹</h1>
         <p class="hd-sub">비공식 집계 · 최근 12개월 · 상위 4개 대회 합산 · T1·T2 대회 1개 이상 출전 필수 · 문의 <a href="mailto:kohaning@gmail.com" style="color:inherit;">kohaning@gmail.com</a> · <a href="https://open.kakao.com/o/svRgACsi" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;background:#1A1815;color:#FFFFFF;font-weight:600;font-size:11px;padding:2px 8px;border-radius:4px;text-decoration:none;vertical-align:middle;letter-spacing:0.01em;">💬 카카오톡 오픈채팅</a> · <span id="online-count" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--ink-3);vertical-align:middle;"><span class="online-dot" style="width:7px;height:7px;border-radius:50%;background:#38a169;display:inline-block;flex-shrink:0;"></span>접속중 <span class="online-num">-</span>명</span></p>
+        <div class="hd-updated" id="last-updated">최종 업데이트 확인 중…</div>
       </div>
       <button class="btn btn-primary" id="btn-import" style="display:none;">대회 결과 추가 / 편집</button>
       <script>if(location.protocol==='file:') document.getElementById('btn-import').style.display='';</script>
@@ -1300,6 +1313,7 @@ if (window.pdfjsLib) {
 // ===== State =====
 const state = {
   tournaments: [],
+  updatedAt: '',
   activeDivision: 'mf',
   importDraft: null,
   previousRankings: {},
@@ -1315,6 +1329,7 @@ async function loadState() {
     if (res && res.ok) {
       const parsed = await res.json();
       if (parsed.tournaments) state.tournaments = parsed.tournaments;
+      state.updatedAt = parsed.updatedAt || parsed.exportedAt || '';
       if (parsed.previousRankings) state.previousRankings = parsed.previousRankings;
       if (parsed.clubMappings) state.clubMappings = parsed.clubMappings;
       console.log('data.json 로드 완료');
@@ -1329,6 +1344,7 @@ async function loadState() {
       if (result && result.value) {
         const parsed = JSON.parse(result.value);
         if (parsed.tournaments) state.tournaments = parsed.tournaments;
+        state.updatedAt = parsed.updatedAt || parsed.exportedAt || '';
         if (parsed.previousRankings) state.previousRankings = parsed.previousRankings;
         if (parsed.clubMappings) state.clubMappings = parsed.clubMappings;
       }
@@ -1337,6 +1353,7 @@ async function loadState() {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed.tournaments) state.tournaments = parsed.tournaments;
+        state.updatedAt = parsed.updatedAt || parsed.exportedAt || '';
         if (parsed.previousRankings) state.previousRankings = parsed.previousRankings;
         if (parsed.clubMappings) state.clubMappings = parsed.clubMappings;
       }
@@ -1347,8 +1364,10 @@ async function loadState() {
 }
 
 async function saveState() {
+  state.updatedAt = new Date().toISOString();
   const data = JSON.stringify({
     version: STORAGE_VERSION,
+    updatedAt: state.updatedAt,
     tournaments: state.tournaments,
     previousRankings: state.previousRankings,
     clubMappings: state.clubMappings,
@@ -2873,9 +2892,11 @@ async function saveImport() {
 
 // ===== Data export/import =====
 function exportData() {
+  state.updatedAt = new Date().toISOString();
   const data = {
     version: STORAGE_VERSION,
     exportedAt: new Date().toISOString(),
+    updatedAt: state.updatedAt,
     tournaments: state.tournaments,
     previousRankings: state.previousRankings,
     clubMappings: state.clubMappings,
@@ -2903,6 +2924,7 @@ async function importData(file) {
     if (!ok) return;
     captureSnapshot();
     state.tournaments = data.tournaments;
+    state.updatedAt = data.updatedAt || data.exportedAt || new Date().toISOString();
     if (data.previousRankings) state.previousRankings = data.previousRankings;
     await saveState();
     renderAll();
@@ -3087,6 +3109,13 @@ function renderUpcoming() {
 }
 
 function renderAll() {
+  const updatedEl = document.getElementById('last-updated');
+  if (updatedEl) {
+    const date = state.updatedAt ? new Date(state.updatedAt) : null;
+    updatedEl.textContent = date && !isNaN(date)
+      ? `최종 업데이트 ${date.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace(/\.$/, '')}`
+      : '최종 업데이트 일자 미확인';
+  }
   renderDivisionNav();
   renderRanking();
   renderTournamentList();
