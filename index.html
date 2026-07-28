@@ -1544,32 +1544,54 @@ function calcPoints(rank, tier) {
 }
 
 // ===== Rolling window =====
+// 시리즈 만료 유예: 시리즈 지정 대회는 12개월이 지나도 같은 시리즈의 "결과가 있는" 차기 회차가
+// 반영되기 전까지 최대 15개월 유효를 유지한다 (v2 ranking.js와 동일 로직).
 function getActiveTournaments(source) {
   const list = source || state.tournaments;
   const now = Date.now();
   const yearAgo = now - 365 * 24 * 60 * 60 * 1000;
+  const graceFloor = now - 456 * 24 * 60 * 60 * 1000;   // 약 15개월
+  const hasResults = t => Object.values(t.results || {}).some(v => (v || []).length > 0);
   const futureTolerance = 24 * 60 * 60 * 1000;
 
-  // 1단계: 12개월 윈도우 필터
+  // 시리즈별 "결과 있는 창 안 최신 회차" — 유예 종료 판정 기준
+  const successorDate = new Map();
+  for (const t of list) {
+    const s = (t.series || '').trim();
+    if (!s || !hasResults(t)) continue;
+    const ts = new Date(t.date).getTime();
+    if (isNaN(ts) || ts < yearAgo || ts > now + futureTolerance) continue;
+    if (!successorDate.has(s) || t.date > successorDate.get(s)) successorDate.set(s, t.date);
+  }
+
+  // 1단계: 12개월 윈도우 필터 (+ 시리즈 유예)
   const inWindow = list.filter(t => {
     const ts = new Date(t.date).getTime();
-    return !isNaN(ts) && ts >= yearAgo && ts <= now + futureTolerance;
+    if (isNaN(ts) || ts > now + futureTolerance) return false;
+    if (ts >= yearAgo) return true;
+    const s = (t.series || '').trim();
+    if (!s || ts < graceFloor) return false;
+    const succ = successorDate.get(s);
+    return !succ || succ <= t.date;
   }).sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  // 2단계: 시리즈 지정된 대회는 가장 최근 1개만 유효
-  const seriesLatest = new Map(); // series -> latest date
+  // 2단계: 시리즈 지정된 대회는 가장 최근 1개만 유효.
+  // 단 대체 기준은 "결과가 있는" 회차만 — 결과 0명 예정 대회가 직전 회차를 밀어내면 안 된다.
+  const seriesLatest = new Map();      // 결과 있는 회차 중 최신
+  const seriesLatestAny = new Map();   // 폴백 (전 회차가 결과 없을 때)
   inWindow.forEach(t => {
     const s = (t.series || '').trim();
     if (!s) return;
-    if (!seriesLatest.has(s) || t.date > seriesLatest.get(s)) {
-      seriesLatest.set(s, t.date);
-    }
+    if (!seriesLatestAny.has(s) || t.date > seriesLatestAny.get(s)) seriesLatestAny.set(s, t.date);
+    if (!hasResults(t)) return;
+    if (!seriesLatest.has(s) || t.date > seriesLatest.get(s)) seriesLatest.set(s, t.date);
   });
 
   return inWindow.filter(t => {
     const s = (t.series || '').trim();
     if (!s) return true; // 시리즈 미지정 → 12개월 윈도우 그대로
-    return t.date === seriesLatest.get(s); // 시리즈 중 최신만
+    if (seriesLatest.has(s)) return t.date === seriesLatest.get(s) || !hasResults(t);
+    return t.date === seriesLatestAny.get(s);
   });
 }
 
@@ -1579,9 +1601,11 @@ function isInWindow(tournament) {
   const futureTolerance = 24 * 60 * 60 * 1000;
   const ts = new Date(tournament.date).getTime();
   if (isNaN(ts)) return { inWindow: false, reason: 'invalid' };
-  if (ts < yearAgo) return { inWindow: false, reason: 'expired' };
   if (ts > now + futureTolerance) return { inWindow: false, reason: 'future' };
-  return { inWindow: true, reason: null };
+  if (ts >= yearAgo) return { inWindow: true, reason: null };
+  // 시리즈 유예 여부는 getActiveTournaments와 동일 판정을 쓴다
+  if (getActiveTournaments().some(t => t.id === tournament.id)) return { inWindow: true, reason: 'grace' };
+  return { inWindow: false, reason: 'expired' };
 }
 
 // ===== Ranking calculation =====
