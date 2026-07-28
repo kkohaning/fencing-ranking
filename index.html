@@ -1494,9 +1494,10 @@ function getPreviousRankings() {
     return null;
   }
 
-  // Latest event = last after date sort. Previous = everything before it.
-  const previousEvents = events.slice(0, -1);
-  const previousTournaments = previousEvents.flatMap(e => e.tournaments);
+  // '최신 이벤트 반영 전' 상태는 전체 대회 목록에서 최신 이벤트만 제외한 뒤 창·시리즈 필터를 다시 적용해 만든다.
+  // 활성 목록을 slice로 자르면 최신 이벤트가 시리즈 규칙으로 대체한 이전 회차가 복원되지 않는다 (v2 ranking.js와 동일 로직).
+  const latestIds = new Set(events[events.length - 1].tournaments.map(t => t.id));
+  const previousTournaments = state.tournaments.filter(t => !latestIds.has(t.id));
 
   const result = {};
   DIV_KEYS.forEach(k => {
@@ -1588,7 +1589,13 @@ function calculateFencerScore(results) {
   if (!results || results.length === 0) {
     return { points: 0, eligible: false, top4Ids: new Set(), reason: '결과 없음' };
   }
-  const sorted = [...results].sort((a, b) => b.points - a.points);
+  // 같은 대회에서 두 행이 들어와도(중복 입력·동명이인 오병합) 대회당 최고 성적 1개만 상위 4개 후보로 삼는다 (v2 ranking.js와 동일)
+  const bestByTournament = new Map();
+  for (const r of results) {
+    const prev = bestByTournament.get(r.tournamentId);
+    if (!prev || r.points > prev.points) bestByTournament.set(r.tournamentId, r);
+  }
+  const sorted = [...bestByTournament.values()].sort((a, b) => b.points - a.points);
   const naturalTop4 = sorted.slice(0, 4);
   const hasT1T2 = naturalTop4.some(r => r.tier === 'T1' || r.tier === 'T2');
 
@@ -3100,7 +3107,9 @@ function renderUpcoming() {
   }
 
   el.innerHTML = upcoming.map(t => {
-    const daysLeft = Math.ceil((new Date(t.date) - new Date()) / (1000 * 60 * 60 * 24));
+    // 로컬 자정 기준으로 계산 — 'YYYY-MM-DD'를 그대로 파싱하면 UTC 자정이 되어 KST 오전 9시 전에 D-day가 하루 크게 나온다 (v2 app.js와 동일 방식)
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const daysLeft = Math.ceil((new Date(t.date + 'T00:00:00') - today) / (1000 * 60 * 60 * 24));
     const totalResults = DIV_KEYS.reduce((s, k) => s + ((t.results[k] || []).length), 0);
     const startDate = t.date.replace(/-/g, '.');
     const endDate = t.endDate ? t.endDate.replace(/-/g, '.') : '';

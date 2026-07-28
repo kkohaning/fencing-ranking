@@ -1,7 +1,7 @@
 {
   "version": 1,
   "exportedAt": "2026-04-28T19:00:46.777Z",
-  "updatedAt": "2026-07-28T16:47:20",
+  "updatedAt": "2026-07-28T21:04:08",
   "tournaments": [
     {
       "id": "tour_1777391593169_komyv",
@@ -609,7 +609,7 @@
           {
             "rank": 120,
             "name": "박수민",
-            "club": "이글펜싱클럽"
+            "club": "올림픽펜싱아카데미"
           },
           {
             "rank": 121,
@@ -1044,6 +1044,11 @@
             "rank": 11,
             "name": "김병조",
             "club": "드림펜싱클럽"
+          },
+          {
+            "rank": 12,
+            "name": "LE JEUNE LUCAS ARNAUD MARIE",
+            "club": "윤남진펜싱클럽대치"
           },
           {
             "rank": 13,
@@ -1676,6 +1681,11 @@
             "rank": 25,
             "name": "김윤정",
             "club": "울산펜싱동호인클럽"
+          },
+          {
+            "rank": 26,
+            "name": "Michotte de welle Blandine Marie",
+            "club": "은호펜싱클럽"
           },
           {
             "rank": 27,
