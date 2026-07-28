@@ -2088,6 +2088,8 @@ function abbreviateName(name) {
   if (/경북|경상북도/.test(n)) return '경북';
   if (/경남|경상남도/.test(n)) return '경남';
   if (/제주(?:특별자치도)?/.test(n)) return '제주';
+  // 수원시펜싱협회장배는 이름에 주관사 '올림피언스포츠'가 붙으므로 올림피언 규칙보다 먼저 판정한다
+  if (/수원(?:시)?(?:펜싱)?(?:협회|장기|장배)/.test(n)) return '수원';
   if (/올림피언/.test(n)) return '올림피언';
   // Fallback: strip year/회 prefix and noise, take first ~5 chars
   const s = n
