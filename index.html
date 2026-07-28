@@ -1597,45 +1597,15 @@ function calculateFencerScore(results) {
   }
   const sorted = [...bestByTournament.values()].sort((a, b) => b.points - a.points);
   const naturalTop4 = sorted.slice(0, 4);
-  const hasT1T2 = naturalTop4.some(r => r.tier === 'T1' || r.tier === 'T2');
 
-  if (hasT1T2) {
-    const sum = naturalTop4.reduce((s, r) => s + r.points, 0);
-    return {
-      points: Math.round(sum * 100) / 100,
-      eligible: true,
-      top4Ids: new Set(naturalTop4.map(r => r.tournamentId)),
-      swapped: false,
-    };
-  }
-
-  const bestT1T2 = sorted.find(r => r.tier === 'T1' || r.tier === 'T2');
-
-  if (!bestT1T2) {
-    const sum = naturalTop4.reduce((s, r) => s + r.points, 0);
-    return {
-      points: Math.round(sum * 100) / 100,
-      eligible: false,
-      top4Ids: new Set(naturalTop4.map(r => r.tournamentId)),
-      reason: '협회 주관 대회 (T1·T2) 미참가',
-    };
-  }
-
-  let modifiedTop4;
-  if (naturalTop4.length === 4) {
-    modifiedTop4 = [...naturalTop4.slice(0, 3), bestT1T2];
-  } else {
-    modifiedTop4 = naturalTop4.some(r => r.tournamentId === bestT1T2.tournamentId)
-      ? naturalTop4
-      : [...naturalTop4, bestT1T2].slice(0, 4);
-  }
-
-  const sum = modifiedTop4.reduce((s, r) => s + r.points, 0);
+  // T1/T2 진입 게이트 폐지(2026-07-28). 티어별 배점으로 대회 위상이 이미 반영되므로 자격까지 이중 제한하지 않는다.
+  // 게이트 유지용 스왑 로직도 함께 제거 — 자연 상위 4개를 그대로 합산 (v2 ranking.js와 동일).
+  const sum = naturalTop4.reduce((s, r) => s + r.points, 0);
   return {
     points: Math.round(sum * 100) / 100,
     eligible: true,
-    top4Ids: new Set(modifiedTop4.map(r => r.tournamentId)),
-    swapped: true,
+    top4Ids: new Set(naturalTop4.map(r => r.tournamentId)),
+    swapped: false,
   };
 }
 
