@@ -317,6 +317,14 @@ button { cursor: pointer; border: none; background: none; }
   margin-bottom: 3px;
   display: block;
 }
+.rt thead .th-region {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+  margin-bottom: 1px;
+}
 .rt thead .th-date {
   font-size: 10px;
   color: var(--ink-3);
@@ -2069,11 +2077,28 @@ function fmtPts(v) {
   return Number(v).toFixed(2).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
 }
 
+// 대회 라벨: 1행 지역(data.json의 region) · 2행 대회명 약칭. 사람들이 대회를 지역으로 기억하는 경우가 많아
+// 지역을 앞세운다. region이 없는 대회는 약칭 한 줄로만 표시한다.
+function tournamentLabel(t) {
+  // getActiveEvents()의 이벤트 객체(같은 대회의 부문별 파일 묶음)도 받는다 — region은 첫 대회에서 가져온다
+  const src = t && t.tournaments && t.tournaments.length ? t.tournaments[0] : t;
+  return { region: (src && src.region || '').trim(), name: abbreviateName(src && src.name) };
+}
+function labelText(t) {
+  const l = tournamentLabel(t);
+  return l.region ? `${l.region} ${l.name}` : l.name;
+}
+function labelHtml(t) {
+  const l = tournamentLabel(t);
+  return (l.region ? `<span class="th-region">${escapeHtml(l.region)}</span>` : '') + escapeHtml(l.name);
+}
+
 // Abbreviate tournament name for compact column header display
 function abbreviateName(name) {
   const n = name || '';
-  if (/대한펜싱협회장배/.test(n)) return '대펜전국';
-  if (/서울특별시장기|서울특별시장배/.test(n)) return '서울시장기';
+  if (/대한펜싱협회장배/.test(n)) return '협회장배';
+  if (/서울(?:특별)?시장(?:기|배)/.test(n)) return '시장기';
+  if (/코리아\s*오픈/.test(n)) return '코리아오픈';
   if (/경기도협회|경기(?:협회|도지사)/.test(n)) return '경기';
   if (/부산(?:광역시)?(?:협회|장기|장배)/.test(n)) return '부산';
   if (/대구(?:광역시)?(?:협회|장기|장배)/.test(n)) return '대구';
@@ -2090,7 +2115,7 @@ function abbreviateName(name) {
   if (/경남|경상남도/.test(n)) return '경남';
   if (/제주(?:특별자치도)?/.test(n)) return '제주';
   // 수원시펜싱협회장배는 이름에 주관사 '올림피언스포츠'가 붙으므로 올림피언 규칙보다 먼저 판정한다
-  if (/수원(?:시)?(?:펜싱)?(?:협회|장기|장배)/.test(n)) return '수원협회장';
+  if (/수원(?:시)?(?:펜싱)?(?:협회|장기|장배)/.test(n)) return '협회장배';
   if (/FILA/i.test(n)) return 'FILA배';   // '생활체육' 규칙보다 먼저 — FILA배 이름에도 생활체육이 들어간다
   if (/생활체육/.test(n)) return '생활체육';
   if (/올림피언/.test(n)) return '올림피언';
@@ -2261,7 +2286,7 @@ function renderRanking() {
     deltaInfo = ` · <span style="color:var(--ink-4);">순위변동: 2개 이상 대회 등록 시 표시</span>`;
   } else {
     const latest = events[events.length - 1];
-    deltaInfo = ` · <span style="color:var(--ink-3);">변동 기준: <strong style="color:var(--ink-2);">${escapeHtml(abbreviateName(latest.name))}</strong> 추가 후</span>`;
+    deltaInfo = ` · <span style="color:var(--ink-3);">변동 기준: <strong style="color:var(--ink-2);">${escapeHtml(labelText(latest))}</strong> 추가 후</span>`;
   }
 
   if (query) {
@@ -2284,7 +2309,7 @@ function renderRanking() {
   const tHeaders = tournaments.map(t => {
     return `
       <th title="${escapeHtml(t.name)}">
-        <span class="th-cmp">${escapeHtml(abbreviateName(t.name))}</span>
+        <span class="th-cmp">${labelHtml(t)}</span>
         <span class="th-date">${fmtDate(t.date)}</span>
         <span class="tier-pill ${t.tier.toLowerCase()}">${t.tier.replace('T', 'Tier ')}</span>
       </th>
@@ -3000,7 +3025,7 @@ function renderCurrentWinner() {
   const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
 
   el.innerHTML = `
-    <div style="font-size:11px;color:var(--ink-3);margin-bottom:10px;">${escapeHtml(abbreviateName(latest.name))} · ${latest.date}</div>
+    <div style="font-size:11px;color:var(--ink-3);margin-bottom:10px;">${escapeHtml(labelText(latest))} · ${latest.date}</div>
     ${podium.map(r => `
       <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);">
         <span style="font-size:15px;flex-shrink:0;">${medals[r.rank] || '🥉'}</span>
