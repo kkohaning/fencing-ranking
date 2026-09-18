@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>전국 동호인 펜싱 랭킹</title>
+<meta name="robots" content="noai, noimageai">
+<meta name="tdm-reservation" content="1">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
@@ -1255,6 +1257,7 @@ button { cursor: pointer; border: none; background: none; }
 
   <footer class="foot">
     이 랭킹은 대한펜싱협회 및 공식 기관과 무관한 <strong>비공식 집계</strong>입니다 · 공식 선발·자격 기준으로 활용될 수 없습니다<br>
+    <span style="font-size:11.5px;color:var(--ink-3);margin-top:4px;display:inline-block;">본 사이트의 랭킹·대회 결과 데이터는 운영자가 수집·정제·편성한 데이터베이스이며, 자동화된 수집과 무단 복제·재배포를 금지합니다 · <a href="./rules.html#data-use" style="color:var(--ink-3);text-decoration:underline;">데이터 이용 안내</a></span><br>
     <span style="margin-top:6px;display:inline-block;">© 2025 kkohaning · All rights reserved · <button class="btn-ghost" id="btn-export" style="font-size:11.5px;padding:0;">데이터 내보내기</button> · <button class="btn-ghost" id="btn-import-data" style="font-size:11.5px;padding:0;">가져오기</button></span>
   </footer>
 
@@ -1332,19 +1335,55 @@ const state = {
   previousRankings: {},
   searchQuery: '',
   clubMappings: [], // [{ from: 'APEX', to: '에이펙스' }, ...]
+  _markedRows: [],  // 검증용 행(src:"manual") — 화면 제외, 저장 시 복원
 };
 
 // ===== Storage =====
+// 검증용 행(src:"manual", tools/fingerprint.mjs)은 화면·집계에서 제외하되,
+// 저장·내보내기 때는 원래 자리에 되돌려 data.json에 그대로 남긴다.
+const isMarkedRow = r => r && r.src === 'manual';
+function splitMarkedRows(tournaments) {
+  const kept = [];
+  const cleaned = (tournaments || []).map(t => {
+    if (!t.results) return t;
+    const results = {};
+    for (const [k, rows] of Object.entries(t.results)) {
+      results[k] = (rows || []).filter(r => {
+        if (isMarkedRow(r)) { kept.push({ tid: t.id, div: k, row: r }); return false; }
+        return true;
+      });
+    }
+    return { ...t, results };
+  });
+  return { cleaned, kept };
+}
+function withMarkedRows(tournaments) {
+  if (!state._markedRows || !state._markedRows.length) return tournaments;
+  return tournaments.map(t => {
+    const mine = state._markedRows.filter(m => m.tid === t.id);
+    if (!mine.length) return t;
+    const results = { ...(t.results || {}) };
+    for (const m of mine) results[m.div] = [...(results[m.div] || []), m.row];
+    return { ...t, results };
+  });
+}
+function applyParsedState(parsed) {
+  if (parsed.tournaments) {
+    const { cleaned, kept } = splitMarkedRows(parsed.tournaments);
+    state.tournaments = cleaned;
+    state._markedRows = kept;
+  }
+  state.updatedAt = parsed.updatedAt || parsed.exportedAt || '';
+  if (parsed.previousRankings) state.previousRankings = parsed.previousRankings;
+  if (parsed.clubMappings) state.clubMappings = parsed.clubMappings;
+}
+
 async function loadState() {
   try {
     // 1순위: 같은 경로의 data.json (배포 환경 — 방문자·관리자 공통)
     const res = await fetch('./data.json').catch(() => null);
     if (res && res.ok) {
-      const parsed = await res.json();
-      if (parsed.tournaments) state.tournaments = parsed.tournaments;
-      state.updatedAt = parsed.updatedAt || parsed.exportedAt || '';
-      if (parsed.previousRankings) state.previousRankings = parsed.previousRankings;
-      if (parsed.clubMappings) state.clubMappings = parsed.clubMappings;
+      applyParsedState(await res.json());
       console.log('data.json 로드 완료');
       return;
     }
@@ -1354,22 +1393,10 @@ async function loadState() {
     // 2순위: localStorage (로컬 편집 환경)
     if (window.storage && window.storage.get) {
       const result = await window.storage.get(STORAGE_KEY);
-      if (result && result.value) {
-        const parsed = JSON.parse(result.value);
-        if (parsed.tournaments) state.tournaments = parsed.tournaments;
-        state.updatedAt = parsed.updatedAt || parsed.exportedAt || '';
-        if (parsed.previousRankings) state.previousRankings = parsed.previousRankings;
-        if (parsed.clubMappings) state.clubMappings = parsed.clubMappings;
-      }
+      if (result && result.value) applyParsedState(JSON.parse(result.value));
     } else {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed.tournaments) state.tournaments = parsed.tournaments;
-        state.updatedAt = parsed.updatedAt || parsed.exportedAt || '';
-        if (parsed.previousRankings) state.previousRankings = parsed.previousRankings;
-        if (parsed.clubMappings) state.clubMappings = parsed.clubMappings;
-      }
+      if (raw) applyParsedState(JSON.parse(raw));
     }
   } catch (e) {
     console.log('No saved state or load error:', e);
@@ -1381,7 +1408,7 @@ async function saveState() {
   const data = JSON.stringify({
     version: STORAGE_VERSION,
     updatedAt: state.updatedAt,
-    tournaments: state.tournaments,
+    tournaments: withMarkedRows(state.tournaments),
     previousRankings: state.previousRankings,
     clubMappings: state.clubMappings,
   });
@@ -2932,7 +2959,7 @@ function exportData() {
     version: STORAGE_VERSION,
     exportedAt: new Date().toISOString(),
     updatedAt: state.updatedAt,
-    tournaments: state.tournaments,
+    tournaments: withMarkedRows(state.tournaments),
     previousRankings: state.previousRankings,
     clubMappings: state.clubMappings,
   };
@@ -2958,7 +2985,11 @@ async function importData(file) {
     );
     if (!ok) return;
     captureSnapshot();
-    state.tournaments = data.tournaments;
+    {
+      const { cleaned, kept } = splitMarkedRows(data.tournaments);
+      state.tournaments = cleaned;
+      state._markedRows = kept;
+    }
     state.updatedAt = data.updatedAt || data.exportedAt || new Date().toISOString();
     if (data.previousRankings) state.previousRankings = data.previousRankings;
     await saveState();
