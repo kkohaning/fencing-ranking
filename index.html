@@ -1668,6 +1668,13 @@ function calculateFencerScore(results) {
   };
 }
 
+// Verified athlete-specific Daejeon exceptions; official tournament result rows stay unchanged.
+const EVENT_PROFILE_CLUB_OVERRIDES = new Map([
+  ["tour_1795273200000_daejeon26|mf|\uc7a5\ub3d9\ud6c8|\uc11c\uc6b8\ub300\ud559\uad50\ud39c\uc2f1\ubd80","\ub9ac\ud39c\uc2f1\ud074\ub7fd"],
+  ["tour_1795273200000_daejeon26|mf|\uc774\uc900\uc6d0|\uc11c\uc6b8\ub300\ud559\uad50\ud39c\uc2f1\ubd80","\ub9ac\ud39c\uc2f1\ud074\ub7fd"],
+  ["tour_1795273200000_daejeon26|wf|\uc870\ud558\uc740|\uc11c\uc6b8\ub300\ud559\uad50\ud39c\uc2f1\ubd80","\ub9ac\ud39c\uc2f1\ud074\ub7fd"],
+]);
+
 function computeRanking(divKey, source) {
   const activeTournaments = getActiveTournaments(source)
     .filter(t => t.results && t.results[divKey] && t.results[divKey].length > 0);
@@ -1677,7 +1684,9 @@ function computeRanking(divKey, source) {
     (t.results[divKey] || []).forEach(r => {
       if (!r.name || !r.rank) return;
       const points = calcPoints(r.rank, t.tier);
-      const club = normalizeClubName(r.club || '');
+      const profileKey = [t.id, divKey, normalizeName(r.name), normalizeName(r.club)].join('|');
+      const profileClub = EVENT_PROFILE_CLUB_OVERRIDES.get(profileKey) ?? r.club ?? '';
+      const club = normalizeClubName(profileClub);
       const result = {
         tournamentId: t.id,
         tournamentName: t.name,
