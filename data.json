@@ -1,7 +1,7 @@
 {
   "version": 1,
   "exportedAt": "2026-04-28T19:00:46.777Z",
-  "updatedAt": "2026-11-23T04:32:26.397Z",
+  "updatedAt": "2026-11-23T05:22:17.360Z",
   "tournaments": [
     {
       "id": "tour_1777391593169_komyv",
@@ -9975,6 +9975,17 @@
           }
         ]
       }
+    },
+    {
+      "id": "tour_1797033600000_busan26",
+      "name": "2026 부산광역시장배 전국남·녀펜싱동호인대회",
+      "date": "2026-12-12",
+      "endDate": "2026-12-13",
+      "tier": "T2",
+      "series": "부산광역시장배",
+      "location": "스포원파크 실내체육관",
+      "region": "부산",
+      "results": {}
     }
   ],
   "previousRankings": {},
